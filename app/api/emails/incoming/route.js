@@ -36,7 +36,7 @@ export async function POST(request) {
     // Parse the incoming email data
     const emailData = await request.json();
     console.log('Received email data:', emailData);
-    const { sender, recipient, subject, body, html } = emailData;
+    const { sender, recipient, subject, ebody, html ,receivedAt} = emailData;
     
     if (!sender || !recipient || !subject) {
       console.log('Validation error: Missing required fields');
