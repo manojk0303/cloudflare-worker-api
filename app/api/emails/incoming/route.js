@@ -55,41 +55,49 @@ export async function POST(request) {
     // Extract username from recipient (e.g., user-123@domain.com → user-123)
     const username = recipient.split('@')[0];
 
-    try{
-        // Forward the email via Lemn
-        const emailResult = await lemn.transactional.send({
+    // Define emailResult variable with a default value
+    let emailResult = { id: 'not_sent' };
+    
+    // Forward the email via Lemn
+    try {
+      emailResult = await lemn.transactional.send({
         fromname: 'Email Forwarding System',
         fromemail: 'send@member-notification.com',
         to: 'manojkumarcpyk@gmail.com', // Your email address
         subject: `[FORWARDED] ${subject} (for ${username})`,
         body: `
-            <html>
+          <html>
             <body>
-                <h2>Forwarded Email from ${sender}</h2>
-                <p><strong>Original Recipient:</strong> ${recipient}</p>
-                <p><strong>Subject:</strong> ${subject}</p>
-                <p><strong>Time Received:</strong> ${new Date().toLocaleString()}</p>
-                <p><strong>Username:</strong> ${username}</p>
-                
-                <hr />
-                <h3>Email Content:</h3>
-                ${html || `<pre>${body}</pre>`}
-                
-                <hr />
-                <p>This email was automatically forwarded by your Cloudflare Email Routing system.</p>
+              <h2>Forwarded Email from ${sender}</h2>
+              <p><strong>Original Recipient:</strong> ${recipient}</p>
+              <p><strong>Subject:</strong> ${subject}</p>
+              <p><strong>Time Received:</strong> ${new Date().toLocaleString()}</p>
+              <p><strong>Username:</strong> ${username}</p>
+              
+              <hr />
+              <h3>Email Content:</h3>
+              ${html || `<pre>${body}</pre>`}
+              
+              <hr />
+              <p>This email was automatically forwarded by your Cloudflare Email Routing system.</p>
             </body>
-            </html>
+          </html>
         `
-        });
-
-        console.log('Email forwarded successfully:', emailResult);
+      });
+      console.log('Email forwarded successfully:', emailResult);
+    } catch (lemnError) {
+      console.error('Error sending email via Lemn:', lemnError);
+      // Continue processing, don't fail the overall request
+      return NextResponse.json(
+        { 
+          error: 'Email forwarding failed',
+          message: lemnError.message,
+          timestamp: new Date().toISOString()
+        },
+        { status: 500 }
+      );
     }
-    catch (lemnError) {
-        console.error('Error sending email via Lemn:', lemnError);
-        // Continue processing - don't fail the request just because forwarding failed
-        emailResult = { error: lemnError.message, id: 'failed' };
-    }
-        
+    
     return NextResponse.json({ 
       success: true, 
       message: 'Email received and forwarded successfully',
